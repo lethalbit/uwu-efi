@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /* uwu-asm.cc - uwu-efi UEFI Bytecode assembler */
-#include <config.hh>
+#include <uwu-efi/config.hh>
 
 #include <fs.hh>
 

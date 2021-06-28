@@ -4,7 +4,7 @@
 #if !defined(UWUASM_FS_HH)
 #define UWUASM_FS_HH
 
-#include <config.hh>
+#include <uwu-efi/config.hh>
 
 #if defined(UWUASM_CPPFS_EXPERIMENTAL)
 	#include <experimental/filesystem>

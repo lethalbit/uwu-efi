@@ -80,6 +80,8 @@ py_inst = py.find_installation(
 	modules: py_modules,
 )
 
+uwuefi_inc = include_directories('.')
+
 subdir('etc')
 subdir('uwu-efi')
 

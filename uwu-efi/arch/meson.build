@@ -20,7 +20,7 @@ uwuefi_arch_headers = files([
 
 install_headers(
 	uwuefi_arch_headers,
-	subdir: 'uwuefi' / 'arch'
+	subdir: 'uwu-efi' / 'arch'
 )
 
 libuwuefi_srcs += files([

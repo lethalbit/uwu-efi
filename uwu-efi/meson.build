@@ -52,7 +52,7 @@ libuwuefi_srcs = files([
 
 subdir('arch')
 
-uwuefi_inc = include_directories('.')
+
 
 uwuefi_headers = files([
 
@@ -60,12 +60,12 @@ uwuefi_headers = files([
 
 install_headers(
 	uwuefi_headers + [ uwuefi_cfg_header ],
-	subdir: 'uwuefi'
+	subdir: 'uwu-efi'
 )
 
 
 libuwuefi = static_library(
-	'uwuefi',
+	'uwu-efi',
 	libuwuefi_srcs,
 	include_directories: [
 		uwuefi_inc,

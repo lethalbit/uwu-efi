@@ -7,7 +7,7 @@ uwuefi_arch_amd64_headers = files([
 
 install_headers(
 	uwuefi_arch_amd64_headers,
-	subdir: 'uwuefi' / 'arch' / 'amd64'
+	subdir: 'uwu-efi' / 'arch' / 'amd64'
 )
 
 libuwuefi_srcs += files([
