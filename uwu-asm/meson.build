@@ -17,7 +17,7 @@ subdir('include')
 
 
 uwuasm_srcs = files([
-
+	'uwu-asm.cc',
 ])
 
 
