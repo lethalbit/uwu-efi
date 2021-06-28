@@ -1,0 +1,20 @@
+option(
+	'build_uwuasm',
+	type: 'boolean',
+	value: true,
+	description: 'Build the uwu-efi UEFI bytecode assembler'
+)
+
+option(
+	'build_examples',
+	type: 'boolean',
+	value: true,
+	description: 'Build the example uwu-efi files'
+)
+
+option(
+	'bugreport_url',
+	type: 'string',
+	value: 'https://github.com/lethalbit/uwu-efi/issues',
+	description: 'URL for bug report submissions'
+)

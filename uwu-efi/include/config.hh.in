@@ -1,0 +1,51 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+/* config.hh - Build-time configuration and runtime configuration defaults */
+@AUTOGEN_HEADER@
+#pragma once
+#if !defined(UWUEFI_CONFIG_HH)
+#define UWUEFI_CONFIG_HH
+
+#include <string_view>
+using namespace std::literals::string_view_literals;
+
+#mesondefine UWUASM_CPPFS_EXPERIMENTAL
+
+namespace uwuefi::config {
+	enum class endian_t : std::uint8_t {
+		little = 0x0U,
+		big    = 0x1U,
+	};
+
+	/* Version Information */
+	[[maybe_unused]]
+	constexpr static auto version{"@VERSION_NUMBER@"sv};
+	[[maybe_unused]]
+	constexpr static auto compiler{"@COMPILER@"sv};
+	[[maybe_unused]]
+	constexpr static auto compiler_version{"@COMPILER_VERSION@"sv};
+
+	/* Platform information */
+	[[maybe_unused]]
+	constexpr static auto target_system{"@TARGET_SYS@"sv};
+	[[maybe_unused]]
+	constexpr static auto target_arch{"@TARGET_ARCH@"sv};
+	[[maybe_unused]]
+	constexpr static auto target_endian{@TARGET_ENDIAN@};
+
+	[[maybe_unused]]
+	constexpr static auto build_system{"@BUILD_SYS@"sv};
+	[[maybe_unused]]
+	constexpr static auto build_arch{"@BUILD_ARCH@"sv};
+	[[maybe_unused]]
+	constexpr static auto build_endian{@BUILD_ENDIAN@};
+
+	/* Directories */
+	[[maybe_unused]]
+	constexpr static auto prefix_dir{"@PREFIX@"sv};
+
+	/* Misc */
+	[[maybe_unused]]
+	constexpr static auto bugreport_url{"@BUGREPORT_URL@"sv};
+}
+
+#endif /* UWUEFI_CONFIG_HH */
