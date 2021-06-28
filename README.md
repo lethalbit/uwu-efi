@@ -13,6 +13,7 @@ uwu-efi is planned to fully support the following platforms,
 |------------|----------------|
 | `aarch64`  | `Planned`      |
 | `amd64`    | `In Progress`  |
+| `rv64`     | `Planned`      |
 
 
 ## Configuring and Building
