@@ -71,6 +71,7 @@ add_project_arguments(
 
 py = import('python')
 py_modules = [
+	'jinja2',
 	'construct',
 ]
 
