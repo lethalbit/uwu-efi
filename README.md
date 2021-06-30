@@ -22,11 +22,16 @@ The following steps describe how to build the uwu-efi package
 
 ### Prerequisites
 
-To build uwu-efi, ensure you have the following build time dependencies:
+To build uwu-efi, ensure you have the following dependencies:
  * git
  * meson
  * ninja
  * g++ >= 8.4.0 or clang++ >= 8.0.1
+
+Some support scripts that uwu-efi uses need the following:
+ * Python >= 3.7
+ * python-construct
+ * python-jinja2
 
 ### Configuring
 
