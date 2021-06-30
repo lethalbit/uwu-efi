@@ -56,6 +56,7 @@ subdir('arch')
 
 uwuefi_headers = files([
 
+	'utilities.hh',
 ])
 
 install_headers(
