@@ -85,6 +85,7 @@ uwuefi_inc = include_directories('.')
 
 subdir('etc')
 subdir('uwu-efi')
+subdir('uwu-util')
 
 if get_option('build_uwuasm')
 	subdir('uwu-asm')
