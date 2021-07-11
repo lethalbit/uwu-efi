@@ -35,6 +35,7 @@ def _collect_commands():
 def main():
 	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
+
 	known_envs = {}
 
 	parser = ArgumentParser(
@@ -61,6 +62,8 @@ def main():
 		cmd['parser_init'](ap)
 
 	args = parser.parse_args()
+
+	_init_directories()
 
 	if not path.exists(ENV_CACHE):
 		with open(ENV_CACHE, 'w') as ec:

@@ -4,9 +4,15 @@ import stat
 from os import path, mkdir, getcwd, environ, symlink, chmod
 from shutil import copyfile
 from uuid import uuid4
+from datetime import datetime
 
 from ..config import *
 from ..utility import *
+
+from ..fs import *
+from ..templates import *
+
+from jinja2 import Template
 
 COMMAND_NAME = 'new'
 COMMAND_DESC = 'create a new environment'
@@ -98,7 +104,7 @@ def command_main(args, envs = None):
 
 	chmod(env_launch_script, stat.S_IEXEC | stat.S_IREAD | stat.S_IRWXU)
 
-	make_root_fs_image(envs[env_id])
+	# make_root_fs_image(envs[env_id])
 
 	log(f'Created environment:')
 	pretty_print_env(envs[env_id])

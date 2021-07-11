@@ -3,6 +3,12 @@ from datetime import datetime
 
 from jinja2 import Template, Environment
 
+__all__ = (
+	'env',
+
+	'QEMU_LAUNCH_WRAPPER_TEMPLATE'
+)
+
 env = Environment(trim_blocks = True, lstrip_blocks = True)
 env.globals['now'] = datetime.utcnow
 
