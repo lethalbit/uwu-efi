@@ -3,6 +3,7 @@
 
 from zlib import crc32
 from uuid import uuid4
+from io import BytesIO, SEEK_END, SEEK_SET
 
 if __name__ == '__main__':
 	from guids import GPT_PART_TYPES
@@ -13,6 +14,10 @@ else:
 from construct import *
 
 ASSUMED_BLOCK_SIZE = 512
+
+__all__ = (
+	'GPTImage'
+)
 
 """
 
@@ -98,9 +103,10 @@ gpt_disk_image = 'GPT Disk Image' / Struct(
 			gpt_entry
 		)
 	),                                             # Partition Entries
-	'disk_data' / LazyArray(
-		(this.primary_pheader.luseable_lba + 1) - this.primary_pheader.fusable_lba,
-		Bytes(ASSUMED_BLOCK_SIZE)
+	'disk_data' / Lazy(
+		Bytes(
+			((this.primary_pheader.luseable_lba + 1) - this.primary_pheader.fusable_lba) * ASSUMED_BLOCK_SIZE,
+		)
 	),                                             # Disk Data
 
 	'backup_pentries' / Array(
@@ -113,12 +119,30 @@ gpt_disk_image = 'GPT Disk Image' / Struct(
 	'backup_pheader' / gpt_header                  # Backup GPT Header | LBAn
 )
 
+class GPTImage:
+	def __init__(self, *, data_stream):
+		if isinstance(data_stream, bytes):
+			self._data = BytesIO(data_stream)
+		else:
+			self._data = data_stream
+
+		self.offset = self._data.tell()
+		self._data.seek(0, SEEK_END)
+		self.end = self._data.tell()
+		self.size = self.end - self.offset
+		self._data.seek(self.offset, SEEK_SET)
+
+		self._disk_img = gpt_disk_image.parse_stream(self._data)
+
+	def __str__(self):
+		return str(self._disk_img)
 
 
 if __name__ == '__main__':
 	def dump_img(file_name):
 		with open(file_name, 'rb') as f:
-			print(gpt_disk_image.parse(f.read()))
+			img = GPTImage(data_stream = f)
+			print(img)
 
 	import sys
 	from os import path
