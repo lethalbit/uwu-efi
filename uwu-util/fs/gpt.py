@@ -179,6 +179,4 @@ if __name__ == '__main__':
 	if args.dump:
 		sys.exit(dump_img(args.file))
 
-
-	print('??? nya?')
 	sys.exit(1)
