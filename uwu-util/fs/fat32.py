@@ -1,4 +1,7 @@
+#!/usr/bin/env python
 # SPDX-License-Identifier: BSD-3-Clause
+
+from io import BytesIO, SEEK_END, SEEK_SET
 
 from construct import *
 
@@ -39,3 +42,63 @@ boot_sector = Struct(
 	'phys_drive_num' / Bytes(1),
 	'boot_sig'       / Const(b'\x55\xAA')
 )
+class FAT32Filesystem:
+	def __init__(self, *, data_stream):
+		if isinstance(data_stream, bytes):
+			self._data = BytesIO(data_stream)
+		else:
+			self._data = data_stream
+
+		self.offset = self._data.tell()
+		self._data.seek(0, SEEK_END)
+		self.end = self._data.tell()
+		self.size = self.end - self.offset
+		self._data.seek(self.offset, SEEK_SET)
+
+	def __str__(self):
+		return str(self._fs_image)
+
+
+if __name__ == '__main__':
+	def dump_img(file_name):
+		with open(file_name, 'rb') as f:
+			fs = FAT32Filesystem(data_stream = f)
+			print(fs)
+
+	import sys
+	from os import path
+	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+
+	parser = ArgumentParser(
+		prog = 'nya_umu',
+		formatter_class = ArgumentDefaultsHelpFormatter,
+		description = 'FAT32 test runner'
+	)
+
+	global_options = parser.add_argument_group('Global Options')
+
+	global_options.add_argument(
+		'--file', '-f',
+		type = str,
+		required = True,
+		help = 'FAT32 image file to operate on',
+	)
+
+	global_options.add_argument(
+		'--dump', '-d',
+		action = 'store_true',
+		default = False,
+		help = 'Dump out the details of a FAT32 fs image'
+	)
+
+	args = parser.parse_args()
+
+	if not path.exists(args.file):
+		print(f'Unable to open file \'{args.file}\' does it exist?')
+		sys.exit(1)
+
+	if args.dump:
+		sys.exit(dump_img(args.file))
+
+
+	sys.exit(1)
