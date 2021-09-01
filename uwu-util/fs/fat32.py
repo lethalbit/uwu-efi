@@ -5,43 +5,142 @@ from io import BytesIO, SEEK_END, SEEK_SET
 
 from construct import *
 
-boot_sector = Struct(
-	'jmp'      / Const(b'\xEB\x00\x90'),
-	'oem_name' / Bytes(8),
-	'params'   / Struct(
-		'bpb'             / Struct(
-			'sub_bpb'        / Struct(
-				'log_sec_bytes'   / Int16ul,
-				'log_sec_clust'   / Bytes(1),
-				'res_log_sec'     / Int16ul,
-				'fat_count'       / Bytes(1),
-				'max_roots'       / Int16ul,
-				'total_log_sec'   / Int16ul,
-				'media_desc'      / Bytes(1),
-				'log_sec_per_fat' / Int16ul,
-			),
-			'phys_sec'       / Int16ul,
-			'disk_heads'     / Int16ul,
-			'hidden_sect'    / Int32ul,
-			'total_log_sect' / Int32ul,
-		),
-		'logical_sectors' / Int32ul,
-		'drive_desc'      / Bytes(2),
-		'version'         / Bytes(2),
-		'root_cluster_id' / Int32ul,
-		'fs_logical_sec'  / Int16ul,
-		'first_log_sec'   / Int16ul,
-		'reserved'        / Padding(12, pattern=b'\xF6'),
-		'drive_num'       / Bytes(1),
-		'dunno_lol'       / Bytes(1),
-		'ext_boot_sig'    / Bytes(1),
-		'vol_id'          / Bytes(4),
-		'vol_label'       / Bytes(11),
-		'fs_type'         / Bytes(8),
-	),
-	'phys_drive_num' / Bytes(1),
-	'boot_sig'       / Const(b'\x55\xAA')
+
+fat32_media_type = 'FAT32 Media Type' / Enum(Int8ul,
+	Media8singleSided   = 0xE5,
+	Media525DoubleSided = 0xED,
+	MediaNonStandard    = 0xEE,
+	MediaSuperFloppy    = 0xEF,
+	Media0              = 0xF0,
+	Media1              = 0xF4,
+	Media2              = 0xF5,
+	Media3              = 0xF8,
+	Media4              = 0xF9,
+	Media5              = 0xFA,
+	Media6              = 0xFB,
+	Media7              = 0xFC,
+	Media8              = 0xFD,
+	Media9              = 0xFE,
+	Media10             = 0xFF,
 )
+
+fat32_boot_param_block = 'FAT32 Boot Parameter Block' / Struct (
+	'sector_size'         / Hex(Int16ul),
+	'sectors_per_cluster' / Hex(Int8ul),
+	'reserved_sectors'    / Hex(Int16ul),
+	'fat_count'           / Hex(Int8ul),
+	'dir_entries'         / Hex(Int16ul),
+	'sectors'             / Hex(Int16ul),
+	'media'               / Hex(fat32_media_type),
+	'sectors_per_fat'     / Hex(Int16ul),
+	'sectors_per_track'   / Hex(Int16ul),
+	'head_count'          / Hex(Int16ul),
+	'hidden_sectors'      / Hex(Int32ul),
+	'total_sectors'       / Hex(Int32ul),
+	# FAT32 Extended Parameters
+	'length'              / Hex(Int32ul),
+	'flags'               / Hex(Int16ul),
+	'version'             / Struct(
+		'major'     / Hex(Int8ul),
+		'minor'     / Hex(Int8ul)      ),
+	'root_cluster'        / Hex(Int32ul),
+	'info_sector'         / Hex(Int16ul),
+	'backup_boot'         / Hex(Int16ul),
+	'reserved'            / Hex(Bytes(12)),
+	'drive_number'        / Hex(Int8ul),
+	'mount_state'         / Hex(Bytes(1)),
+	'boot_signature'      / Hex(Int8ul),
+	'volume_id'           / Hex(Bytes(4)),
+	'volume_label'        / PaddedString(11, 'ascii'),
+	'fs_type'             / Hex(Bytes(8)),
+
+)
+
+fat32_boot_sector = 'FAT32 Boot Sector' / Struct(
+	'jmp'       / Hex(Bytes(3)),
+	'name'      / PaddedString(8, 'ascii'),
+	'params'    / fat32_boot_param_block,
+	'boot_code' / Bytes(0x1FE - (11 + fat32_boot_param_block.sizeof())),
+	'boot_sig'  / Hex(Const(b'\x55\xAA')),
+)
+
+fat32_fsinfo_sector = 'FAT32 Filesystem Info Sector' / Struct(
+	'fsinfo_sig'    / Hex(Const(b'\x52\x52\x61\x41')),
+	'reserved'      / Bytes(480),
+	'fsinfo_sig2'   / Hex(Const(b'\x72\x72\x41\x61')),
+	'last_known_fc' / Hex(Int32ul),
+	'recent_fc'     / Hex(Int32ul),
+	'reserved2'     / Bytes(12),
+	'fsinfo_sig3'   / Hex(Const(b'\x00\x00\x55\xAA')),
+)
+
+fat32_reserved_sectors = 'FAT32 Reserved Sectors' / Struct(
+	'boot'   / fat32_boot_sector,                  # FAT32 Boot Sector
+	'fsinfo' / fat32_fsinfo_sector,                # FAT32 FS Info Sector
+	           Lazy(Bytes(
+	           		(  this.boot.params.sector_size
+	           		 * this.boot.params.reserved_sectors)
+	           		- (fat32_boot_sector.sizeof() + fat32_fsinfo_sector.sizeof())
+	           ))
+)
+
+
+fat32_allocation_table = 'FAT32 File Allocation Table' / Struct(
+	'table_size'	/ Computed(
+		(	this._.reserved_sectors.boot.params.length
+		* this._.reserved_sectors.boot.params.sector_size
+		) // 4),
+	'tables'    	/ Array(
+		this._.reserved_sectors.boot.params.fat_count,
+		'table' / LazyArray(
+			this.table_size,
+			BitsSwapped(BitStruct(
+				'cluster_address' / BitsInteger(28),
+				'reserved'        / BitsInteger(4))
+		)),
+	),
+)
+
+fat32_directory_entry = 'FAT32 Directory Entry' / Struct(
+	'short_name'	/ PaddedString(8, 'ascii'),
+	'short_ext'		/ PaddedString(3, 'ascii'),
+	'file_attrs'	/ BitsSwapped(BitStruct(
+		'read_only'		/ Flag,
+		'hidden'		/ Flag,
+		'system'		/ Flag,
+		'volume_label'	/ Flag,
+		'subdirectory'	/ Flag,
+		'archive'		/ Flag,
+		'device'		/ Flag,
+		'reserved'		/ Flag,
+	)),
+	'wtf_microsoft'		/ Bytes(1),
+	'timespamp_garbage'	/ Bytes(7),
+	'fc_high'			/ Hex(Int16ul),
+	'lm_time'			/ Bytes(2),
+	'lm_date'			/ Bytes(2),
+	'fc_low'			/ Hex(Int16ul),
+	'file_size'			/ Hex(Int32ul),
+
+)
+
+fat32_directory_table = 'FAT32 Directory Table' / Struct(
+	'volume_label'	/ fat32_directory_entry,
+	'dir_entries' 	/ Array(8, fat32_directory_entry),
+)
+
+fat32_data_region = 'FAT32 Data Region' / Struct(
+	'root_dir_table'  / fat32_directory_table,
+	'nya?'            / GreedyBytes
+)
+
+fat32_fs_image = 'FAT32 Filesystem' / Struct(
+	'reserved_sectors' 		/ fat32_reserved_sectors,
+	'file_allocation_table' / fat32_allocation_table,
+	'data_region'           / fat32_data_region,
+)
+
+
 class FAT32Filesystem:
 	def __init__(self, *, data_stream):
 		if isinstance(data_stream, bytes):
@@ -54,6 +153,8 @@ class FAT32Filesystem:
 		self.end = self._data.tell()
 		self.size = self.end - self.offset
 		self._data.seek(self.offset, SEEK_SET)
+
+		self._fs_image = fat32_fs_image.parse_stream(self._data)
 
 	def __str__(self):
 		return str(self._fs_image)
